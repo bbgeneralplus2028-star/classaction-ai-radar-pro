@@ -1,41 +1,39 @@
 import requests
 
-BASE_URL = "https://www.courtlistener.com/api/rest/v4/search/"
+URL = "https://www.courtlistener.com/api/rest/v4/opinions/"
 
 def fetch_latest_cases():
     try:
         params = {
-            "q": "class action lawsuit",
-            "type": "o",  # opinions
-            "order_by": "score desc"
+            "order_by": "-date_created",
+            "page_size": 20,
+            "q": "settlement OR lawsuit OR class action"
         }
 
-        response = requests.get(BASE_URL, params=params, timeout=15)
+        r = requests.get(URL, params=params, timeout=15)
 
-        print("STATUS:", response.status_code)
+        print("STATUS:", r.status_code)
 
-        if response.status_code != 200:
-            print("API ERROR")
+        if r.status_code != 200:
             return []
 
-        data = response.json()
-
+        data = r.json()
         results = data.get("results", [])
 
         cases = []
 
         for item in results:
             cases.append({
-                "title": item.get("caseName") or item.get("case_name") or "Unknown",
-                "court": item.get("court") or "Unknown",
-                "date": item.get("dateFiled") or "",
+                "title": item.get("caseName") or "Unknown Case",
+                "court": str(item.get("court") or "Unknown"),
+                "date": item.get("date_created") or "",
                 "url": item.get("absolute_url") or ""
             })
 
-        print("FOUND CASES:", len(cases))
+        print("FOUND:", len(cases))
 
         return cases
 
     except Exception as e:
-        print("FETCH ERROR:", e)
+        print("ERROR:", e)
         return []
