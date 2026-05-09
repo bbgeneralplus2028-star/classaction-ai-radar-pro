@@ -1,39 +1,67 @@
 import requests
 
-URL = "https://www.courtlistener.com/api/rest/v4/opinions/"
-
-def fetch_latest_cases():
+def fetch_courtlistener():
     try:
-        params = {
-            "order_by": "-date_created",
-            "page_size": 20,
-            "q": "settlement OR lawsuit OR class action"
-        }
-
-        r = requests.get(URL, params=params, timeout=15)
-
-        print("STATUS:", r.status_code)
+        url = "https://www.courtlistener.com/api/rest/v4/opinions/"
+        r = requests.get(url, params={"page_size": 20}, timeout=15)
 
         if r.status_code != 200:
             return []
 
-        data = r.json()
-        results = data.get("results", [])
+        data = r.json().get("results", [])
 
-        cases = []
-
-        for item in results:
-            cases.append({
-                "title": item.get("caseName") or "Unknown Case",
-                "court": str(item.get("court") or "Unknown"),
-                "date": item.get("date_created") or "",
-                "url": item.get("absolute_url") or ""
-            })
-
-        print("FOUND:", len(cases))
-
-        return cases
-
-    except Exception as e:
-        print("ERROR:", e)
+        return [
+            {
+                "title": x.get("caseName") or "Unknown Case",
+                "court": str(x.get("court") or "Unknown"),
+                "date": x.get("date_created") or "",
+                "url": x.get("absolute_url") or ""
+            }
+            for x in data
+        ]
+    except:
         return []
+
+
+def fetch_google_law_news():
+    try:
+        url = "https://news.google.com/rss/search?q=class+action+lawsuit"
+        r = requests.get(url, timeout=10)
+
+        if r.status_code != 200:
+            return []
+
+        # simple fallback parsing (no XML lib dependency)
+        items = r.text.split("<item>")[1:11]
+
+        results = []
+
+        for item in items:
+            try:
+                title = item.split("<title>")[1].split("</title>")[0]
+                link = item.split("<link>")[1].split("</link>")[0]
+
+                results.append({
+                    "title": title,
+                    "court": "News Source",
+                    "date": "",
+                    "url": link
+                })
+            except:
+                continue
+
+        return results
+    except:
+        return []
+
+
+def fetch_latest_cases():
+    """
+    MASTER AGGREGATOR
+    """
+    results = []
+
+    results.extend(fetch_courtlistener())
+    results.extend(fetch_google_law_news())
+
+    return results
