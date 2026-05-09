@@ -11,7 +11,8 @@ def scan():
 @router.get("/lawsuits")
 def get_lawsuits():
     db = SessionLocal()
-    data = db.query(Lawsuit).order_by(Lawsuit.id.desc()).all()
+    data = db.query(Lawsuit).all()
+    db.close()
 
     return [
         {
