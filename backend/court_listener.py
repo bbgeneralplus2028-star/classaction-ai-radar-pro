@@ -4,10 +4,6 @@ def fetch_latest_cases():
 
     url = "https://www.courtlistener.com/api/rest/v3/dockets/"
 
-    params = {
-        "page_size": 10
-    }
-
     headers = {
         "User-Agent": "Mozilla/5.0"
     }
@@ -16,25 +12,37 @@ def fetch_latest_cases():
 
         response = requests.get(
             url,
-            params=params,
             headers=headers,
             timeout=30
         )
 
+        print("STATUS CODE:", response.status_code)
+
         data = response.json()
 
-        results = []
+        print("API RESPONSE:", data)
 
-        for item in data.get("results", []):
+        cases = []
 
-            results.append({
-                "title": item.get("case_name", "Unknown Case"),
-                "court": str(item.get("court", "Unknown Court")),
-                "date": item.get("date_filed", ""),
-                "url": item.get("absolute_url", "")
+        results = data.get("results", [])
+
+        for item in results:
+
+            title = item.get("case_name")
+
+            if not title:
+                continue
+
+            cases.append({
+                "title": title,
+                "court": str(item.get("court")),
+                "date": item.get("date_filed"),
+                "url": item.get("absolute_url")
             })
 
-        return results
+        print("TOTAL CASES:", len(cases))
+
+        return cases
 
     except Exception as e:
 
