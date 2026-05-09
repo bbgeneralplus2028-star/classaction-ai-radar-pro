@@ -1,8 +1,12 @@
 from fastapi import APIRouter
-from backend.database import SessionLocal, Lawsuit
 from backend.scanner import run_daily_scan
+from backend.database import SessionLocal, Lawsuit
 
 router = APIRouter()
+
+@router.get("/health")
+def health():
+    return {"status": "ok"}
 
 @router.get("/scan")
 def scan():
@@ -13,10 +17,22 @@ def scan():
     }
 
 @router.get("/lawsuits")
-def get_lawsuits():
+def lawsuits():
     db = SessionLocal()
-    return db.query(Lawsuit).all()
 
-@router.get("/health")
-def health():
-    return {"status": "ok"}
+    results = db.query(Lawsuit).all()
+
+    data = []
+
+    for item in results:
+        data.append({
+            "id": item.id,
+            "title": item.title,
+            "court": item.court,
+            "date": item.date,
+            "url": item.url
+        })
+
+    db.close()
+
+    return data
