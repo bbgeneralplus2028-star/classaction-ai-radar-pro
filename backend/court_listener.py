@@ -1,37 +1,41 @@
 import requests
 
+COURTLISTENER_URL = "https://www.courtlistener.com/api/rest/v4/opinions/"
+
 def fetch_latest_cases():
     try:
-        url = "https://example.com/api/cases"  # replace with real source
+        print("🔎 Fetching real cases from CourtListener...")
 
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
+        params = {
+            "order_by": "-date_created",
+            "page_size": 20
+        }
+
+        response = requests.get(COURTLISTENER_URL, params=params, timeout=15)
+
+        print("STATUS CODE:", response.status_code)
+
+        if response.status_code != 200:
+            print("FAILED API RESPONSE")
+            return []
 
         data = response.json()
 
-        print("FETCH RAW RESPONSE:", data)
+        results = data.get("results", [])
 
-        # Normalize structure
-        if isinstance(data, dict):
-            data = data.get("results") or data.get("data") or []
+        cases = []
 
-        if not isinstance(data, list):
-            return []
-
-        cleaned = []
-
-        for item in data:
-            if not isinstance(item, dict):
-                continue
-
-            cleaned.append({
-                "title": item.get("title"),
-                "court": item.get("court"),
-                "date": item.get("date"),
-                "url": item.get("url")
+        for item in results:
+            cases.append({
+                "title": item.get("caseName") or "Unknown Case",
+                "court": item.get("court") or "Unknown Court",
+                "date": item.get("date_created") or "",
+                "url": item.get("absolute_url") or ""
             })
 
-        return cleaned
+        print(f"FOUND {len(cases)} CASES")
+
+        return cases
 
     except Exception as e:
         print("FETCH ERROR:", e)
