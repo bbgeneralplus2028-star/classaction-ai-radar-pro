@@ -1,25 +1,17 @@
-from backend.database import SessionLocal, Lawsuit
-from backend.court_listener import fetch_latest_cases
+from fastapi import APIRouter
+from backend.scanner import run_daily_scan
 
-def run_daily_scan():
-    db = SessionLocal()
+router = APIRouter()
 
-    cases = fetch_latest_cases()
-
-    inserted = 0
-
-    for case in cases:
-        lawsuit = Lawsuit(
-            title=case.get("title"),
-            court=case.get("court"),
-            date=case.get("date"),
-            url=case.get("url")
-        )
-
-        db.add(lawsuit)
-        inserted += 1
-
-    db.commit()
-    db.close()
-
-    return inserted
+@router.get("/scan")
+def scan():
+    try:
+        count = run_daily_scan()
+        return {
+            "message": "scan complete",
+            "inserted": count
+        }
+    except Exception as e:
+        return {
+            "error": str(e)
+        }
