@@ -4,41 +4,35 @@ from backend.database import SessionLocal, Lawsuit
 
 router = APIRouter()
 
-# Health check
-@router.get("/health")
-def health():
-    return {
-        "status": "ok"
-    }
-
-# Manual lawsuit scan
 @router.get("/scan")
 def scan():
     count = run_daily_scan()
 
     return {
         "message": "scan complete",
-        "inserted": count
+        "inserted": count,
+        "status": "success" if count > 0 else "no_new_data"
     }
 
-# View lawsuits dashboard data
 @router.get("/lawsuits")
 def get_lawsuits():
     db = SessionLocal()
+    try:
+        results = db.query(Lawsuit).all()
 
-    lawsuits = db.query(Lawsuit).all()
+        return [
+            {
+                "id": l.id,
+                "title": l.title,
+                "court": l.court,
+                "date": l.date,
+                "url": l.url
+            }
+            for l in results
+        ]
+    finally:
+        db.close()
 
-    results = []
-
-    for lawsuit in lawsuits:
-        results.append({
-            "id": lawsuit.id,
-            "title": lawsuit.title,
-            "court": lawsuit.court,
-            "date": lawsuit.date,
-            "url": lawsuit.url
-        })
-
-    db.close()
-
-    return results
+@router.get("/health")
+def health():
+    return {"status": "ok"}
