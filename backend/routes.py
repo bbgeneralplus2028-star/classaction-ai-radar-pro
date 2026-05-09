@@ -12,37 +12,38 @@ def health():
     return {"status": "ok"}
 
 # -------------------------
-# Manual Scan Endpoint
+# AI Radar Scan (MAIN)
 # -------------------------
 @router.get("/scan")
 def scan():
     count = run_daily_scan()
 
     return {
-        "message": "scan complete",
+        "message": "AI Radar scan complete",
         "inserted": count,
-        "status": "live_data" if count > 0 else "no_new_data_found"
+        "status": "live_data" if count > 0 else "no_new_data_found",
+        "note": "System now uses multiple legal data sources"
     }
 
 # -------------------------
-# Get Stored Lawsuits
+# View Stored Lawsuits
 # -------------------------
 @router.get("/lawsuits")
 def get_lawsuits():
     db = SessionLocal()
 
     try:
-        lawsuits = db.query(Lawsuit).all()
+        rows = db.query(Lawsuit).all()
 
         return [
             {
-                "id": l.id,
-                "title": l.title,
-                "court": l.court,
-                "date": l.date,
-                "url": l.url
+                "id": r.id,
+                "title": r.title,
+                "court": r.court,
+                "date": r.date,
+                "url": r.url
             }
-            for l in lawsuits
+            for r in rows
         ]
 
     finally:
