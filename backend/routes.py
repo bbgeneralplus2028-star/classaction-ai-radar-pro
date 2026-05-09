@@ -12,7 +12,7 @@ def health():
     return {"status": "ok"}
 
 # -------------------------
-# AI Radar Scan (MAIN)
+# MAIN SCAN (PRODUCTION)
 # -------------------------
 @router.get("/scan")
 def scan():
@@ -22,11 +22,11 @@ def scan():
         "message": "AI Radar scan complete",
         "inserted": count,
         "status": "live_data" if count > 0 else "no_new_data_found",
-        "note": "System now uses multiple legal data sources"
+        "note": "System uses multi-source legal ingestion"
     }
 
 # -------------------------
-# View Stored Lawsuits
+# VIEW DATABASE
 # -------------------------
 @router.get("/lawsuits")
 def get_lawsuits():
@@ -48,3 +48,14 @@ def get_lawsuits():
 
     finally:
         db.close()
+
+# -------------------------
+# DEBUG TEST ENDPOINT (SAFE)
+# -------------------------
+@router.get("/debug-scan")
+def debug_scan():
+    from backend.scanner import run_daily_scan
+    return {
+        "debug_inserted": run_daily_scan(),
+        "note": "debug only - remove in production if desired"
+    }
