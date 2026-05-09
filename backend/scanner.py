@@ -1,7 +1,13 @@
 import requests
 from ai_summary import summarize_lawsuit
 from database import SessionLocal, Lawsuit
+from notification_engine import create_notification
 
+create_notification(
+    title="New Class Action Detected",
+    message=summary,
+    lawsuit_id=lawsuit.id
+)
 COURTLISTENER_URL = "https://www.courtlistener.com/api/rest/v3/dockets/"
 
 def run_daily_scan():
