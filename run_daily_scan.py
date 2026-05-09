@@ -7,17 +7,40 @@ def run_daily_scan():
     try:
         cases = fetch_latest_cases()
 
-        print("CASES:", cases)
+        print("RAW CASES OUTPUT:", cases)
+        print("TYPE:", type(cases))
+
+        if not cases:
+            print("NO CASES RETURNED FROM SOURCE")
+            return 0
+
+        if not isinstance(cases, list):
+            print("INVALID CASE FORMAT (NOT A LIST)")
+            return 0
 
         inserted = 0
 
-        for case in cases or []:
+        for case in cases:
             try:
+                if not isinstance(case, dict):
+                    print("SKIPPING NON-DICT CASE:", case)
+                    continue
+
+                title = case.get("title") or "Unknown"
+                court = case.get("court") or "Unknown"
+                date = case.get("date") or ""
+                url = case.get("url") or ""
+
+                # Skip completely empty records
+                if title == "Unknown" and not url:
+                    print("SKIPPING EMPTY CASE:", case)
+                    continue
+
                 lawsuit = Lawsuit(
-                    title=str(case.get("title", "Unknown")),
-                    court=str(case.get("court", "Unknown")),
-                    date=str(case.get("date", "")),
-                    url=str(case.get("url", ""))
+                    title=str(title),
+                    court=str(court),
+                    date=str(date),
+                    url=str(url)
                 )
 
                 db.add(lawsuit)
@@ -26,7 +49,13 @@ def run_daily_scan():
             except Exception as inner:
                 print("INSERT ERROR:", inner)
 
-        db.commit()
+        # Only commit if something was added
+        if inserted > 0:
+            db.commit()
+        else:
+            db.rollback()
+
+        print("TOTAL INSERTED:", inserted)
         return inserted
 
     except Exception as e:
