@@ -145,3 +145,67 @@ def debug_scan():
 
     finally:
         db.close()
+
+# =========================================
+# SEED TEST DATA
+# =========================================
+@router.get("/seed")
+def seed_database():
+
+    db = SessionLocal()
+
+    try:
+
+        # Prevent duplicate seeds
+        existing = db.query(Lawsuit).first()
+
+        if existing:
+            return {
+                "message": "Database already contains data"
+            }
+
+        sample_cases = [
+
+            Lawsuit(
+                title="Capital One Class Action Settlement",
+                court="Federal Court",
+                date="2026-01-01",
+                url="https://example.com/case1"
+            ),
+
+            Lawsuit(
+                title="CFPB vs Debt Collector Group",
+                court="CFPB",
+                date="2026-01-02",
+                url="https://example.com/case2"
+            ),
+
+            Lawsuit(
+                title="Credit Bureau Reporting Lawsuit",
+                court="District Court",
+                date="2026-01-03",
+                url="https://example.com/case3"
+            )
+        ]
+
+        for case in sample_cases:
+            db.add(case)
+
+        db.commit()
+
+        return {
+            "message": "Seed data inserted successfully",
+            "inserted": len(sample_cases)
+        }
+
+    except Exception as e:
+
+        db.rollback()
+
+        return {
+            "message": "Seed failed",
+            "error": str(e)
+        }
+
+    finally:
+        db.close()
