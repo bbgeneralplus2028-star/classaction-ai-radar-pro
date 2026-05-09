@@ -6,22 +6,10 @@ router = APIRouter()
 
 @router.get("/scan")
 def scan():
-    return run_daily_scan()
+    run_daily_scan()
+    return {"message": "scan complete"}
 
 @router.get("/lawsuits")
 def get_lawsuits():
     db = SessionLocal()
-    data = db.query(Lawsuit).all()
-    db.close()
-
-    return [
-        {
-            "id": l.id,
-            "title": l.title,
-            "court": l.court,
-            "filed_date": l.filed_date,
-            "summary": l.summary,
-            "url": l.url
-        }
-        for l in data
-    ]
+    return db.query(Lawsuit).all()
