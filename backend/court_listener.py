@@ -11,7 +11,7 @@ def fetch_latest_cases():
 
         r = requests.get(url, params=params, timeout=15)
 
-        print("STATUS:", r.status_code)
+        print("API STATUS:", r.status_code)
 
         if r.status_code != 200:
             return []
@@ -24,8 +24,11 @@ def fetch_latest_cases():
             cases.append({
                 "title": item.get("caseName") or "Unknown Case",
                 "court": str(item.get("court") or "Unknown"),
-                "date": item.get("date_created") or "",
-                "url": item.get("absolute_url") or ""
+                "filed_date": item.get("date_created") or "",
+                "url": item.get("absolute_url") or "",
+                "summary": item.get("snippet") or "",
+                "source": "courtlistener",
+                "category": "legal"
             })
 
         print("FOUND CASES:", len(cases))
