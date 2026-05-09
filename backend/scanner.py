@@ -10,6 +10,15 @@ def run_daily_scan():
         inserted = 0
 
         for case in cases:
+
+            # Prevent duplicates
+            existing = db.query(Lawsuit).filter(
+                Lawsuit.url == case.get("url")
+            ).first()
+
+            if existing:
+                continue
+
             lawsuit = Lawsuit(
                 title=case.get("title"),
                 court=case.get("court"),
@@ -18,6 +27,7 @@ def run_daily_scan():
             )
 
             db.add(lawsuit)
+
             inserted += 1
 
         db.commit()
