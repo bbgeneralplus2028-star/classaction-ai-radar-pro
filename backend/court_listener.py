@@ -1,22 +1,21 @@
 import requests
 
-COURTLISTENER_URL = "https://www.courtlistener.com/api/rest/v4/opinions/"
+BASE_URL = "https://www.courtlistener.com/api/rest/v4/search/"
 
 def fetch_latest_cases():
     try:
-        print("🔎 Fetching real cases from CourtListener...")
-
         params = {
-            "order_by": "-date_created",
-            "page_size": 20
+            "q": "class action lawsuit",
+            "type": "o",  # opinions
+            "order_by": "score desc"
         }
 
-        response = requests.get(COURTLISTENER_URL, params=params, timeout=15)
+        response = requests.get(BASE_URL, params=params, timeout=15)
 
-        print("STATUS CODE:", response.status_code)
+        print("STATUS:", response.status_code)
 
         if response.status_code != 200:
-            print("FAILED API RESPONSE")
+            print("API ERROR")
             return []
 
         data = response.json()
@@ -27,13 +26,13 @@ def fetch_latest_cases():
 
         for item in results:
             cases.append({
-                "title": item.get("caseName") or "Unknown Case",
-                "court": item.get("court") or "Unknown Court",
-                "date": item.get("date_created") or "",
+                "title": item.get("caseName") or item.get("case_name") or "Unknown",
+                "court": item.get("court") or "Unknown",
+                "date": item.get("dateFiled") or "",
                 "url": item.get("absolute_url") or ""
             })
 
-        print(f"FOUND {len(cases)} CASES")
+        print("FOUND CASES:", len(cases))
 
         return cases
 
