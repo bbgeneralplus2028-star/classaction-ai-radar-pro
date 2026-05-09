@@ -4,6 +4,16 @@ from backend.database import SessionLocal, Lawsuit
 
 router = APIRouter()
 
+# -------------------------
+# Health Check
+# -------------------------
+@router.get("/health")
+def health():
+    return {"status": "ok"}
+
+# -------------------------
+# Manual Scan Endpoint
+# -------------------------
 @router.get("/scan")
 def scan():
     count = run_daily_scan()
@@ -11,14 +21,18 @@ def scan():
     return {
         "message": "scan complete",
         "inserted": count,
-        "status": "success" if count > 0 else "no_new_data"
+        "status": "live_data" if count > 0 else "no_new_data_found"
     }
 
+# -------------------------
+# Get Stored Lawsuits
+# -------------------------
 @router.get("/lawsuits")
 def get_lawsuits():
     db = SessionLocal()
+
     try:
-        results = db.query(Lawsuit).all()
+        lawsuits = db.query(Lawsuit).all()
 
         return [
             {
@@ -28,11 +42,8 @@ def get_lawsuits():
                 "date": l.date,
                 "url": l.url
             }
-            for l in results
+            for l in lawsuits
         ]
+
     finally:
         db.close()
-
-@router.get("/health")
-def health():
-    return {"status": "ok"}
