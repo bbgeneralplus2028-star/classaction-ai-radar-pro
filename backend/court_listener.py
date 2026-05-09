@@ -2,50 +2,50 @@ import requests
 
 def fetch_latest_cases():
 
-    url = "https://www.courtlistener.com/api/rest/v3/dockets/"
-
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
-
     try:
+
+        url = "https://www.courtlistener.com/api/rest/v3/dockets/"
 
         response = requests.get(
             url,
-            headers=headers,
-            timeout=30
+            timeout=30,
+            headers={
+                "User-Agent": "Mozilla/5.0"
+            }
         )
 
-        print("STATUS CODE:", response.status_code)
+        print("STATUS:", response.status_code)
+
+        raw = response.text
+
+        print("RAW RESPONSE:")
+        print(raw)
 
         data = response.json()
 
-        print("API RESPONSE:", data)
+        print("JSON TYPE:", type(data))
 
-        cases = []
+        print("JSON KEYS:", data.keys())
 
         results = data.get("results", [])
 
+        print("RESULT COUNT:", len(results))
+
+        lawsuits = []
+
         for item in results:
 
-            title = item.get("case_name")
-
-            if not title:
-                continue
-
-            cases.append({
-                "title": title,
-                "court": str(item.get("court")),
-                "date": item.get("date_filed"),
-                "url": item.get("absolute_url")
+            lawsuits.append({
+                "title": str(item),
+                "court": "Unknown",
+                "date": "",
+                "url": ""
             })
 
-        print("TOTAL CASES:", len(cases))
-
-        return cases
+        return lawsuits
 
     except Exception as e:
 
-        print("COURTLISTENER ERROR:", str(e))
+        print("FULL ERROR:", str(e))
 
         return []
