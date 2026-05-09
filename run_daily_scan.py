@@ -7,23 +7,26 @@ def run_daily_scan():
     try:
         cases = fetch_latest_cases()
 
-        print("RAW CASES OUTPUT:", cases)
-        print("TYPE:", type(cases))
+        print("\n=== RAW CASES ===")
+        print(cases)
+        print("TYPE:", type(cases), "\n")
 
         if not cases:
-            print("NO CASES RETURNED FROM SOURCE")
+            print("NO CASES RETURNED")
             return 0
 
         if not isinstance(cases, list):
-            print("INVALID CASE FORMAT (NOT A LIST)")
+            print("INVALID CASE FORMAT")
             return 0
 
         inserted = 0
+        skipped = 0
 
-        for case in cases:
+        for i, case in enumerate(cases):
             try:
                 if not isinstance(case, dict):
-                    print("SKIPPING NON-DICT CASE:", case)
+                    print(f"[SKIP {i}] NOT A DICT:", case)
+                    skipped += 1
                     continue
 
                 title = case.get("title") or "Unknown"
@@ -31,9 +34,17 @@ def run_daily_scan():
                 date = case.get("date") or ""
                 url = case.get("url") or ""
 
-                # Skip completely empty records
+                # Skip useless records
                 if title == "Unknown" and not url:
-                    print("SKIPPING EMPTY CASE:", case)
+                    print(f"[SKIP {i}] EMPTY CASE:", case)
+                    skipped += 1
+                    continue
+
+                # Prevent duplicates (basic safety)
+                exists = db.query(Lawsuit).filter(Lawsuit.url == url).first()
+                if exists:
+                    print(f"[SKIP {i}] DUPLICATE:", url)
+                    skipped += 1
                     continue
 
                 lawsuit = Lawsuit(
@@ -47,20 +58,23 @@ def run_daily_scan():
                 inserted += 1
 
             except Exception as inner:
-                print("INSERT ERROR:", inner)
+                print(f"[ERROR {i}] INSERT FAILED:", inner)
+                skipped += 1
 
-        # Only commit if something was added
         if inserted > 0:
             db.commit()
         else:
             db.rollback()
 
-        print("TOTAL INSERTED:", inserted)
+        print("\n=== SCAN RESULT ===")
+        print("INSERTED:", inserted)
+        print("SKIPPED:", skipped)
+
         return inserted
 
     except Exception as e:
         db.rollback()
-        print("SCAN FAILED:", e)
+        print("SCAN FAILED HARD:", e)
         return 0
 
     finally:
