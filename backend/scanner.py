@@ -7,35 +7,59 @@ def run_daily_scan():
     try:
         cases = fetch_latest_cases()
 
+        print("\n=== RAW CASES ===")
+        print(cases)
+        print("TYPE:", type(cases))
+
+        if not cases or not isinstance(cases, list):
+            print("NO VALID CASES FOUND")
+            return 0
+
         inserted = 0
 
-        for case in cases:
+        for i, case in enumerate(cases):
+            try:
+                if not isinstance(case, dict):
+                    continue
 
-            # Prevent duplicates
-            existing = db.query(Lawsuit).filter(
-                Lawsuit.url == case.get("url")
-            ).first()
+                title = case.get("title") or "Unknown Case"
+                court = case.get("court") or "Unknown"
+                date = case.get("date") or ""
+                url = case.get("url") or ""
 
-            if existing:
-                continue
+                # Skip useless entries
+                if title == "Unknown Case" and not url:
+                    continue
 
-            lawsuit = Lawsuit(
-                title=case.get("title"),
-                court=case.get("court"),
-                date=case.get("date"),
-                url=case.get("url")
-            )
+                # Prevent duplicates
+                exists = db.query(Lawsuit).filter(Lawsuit.url == url).first()
+                if exists:
+                    continue
 
-            db.add(lawsuit)
+                db.add(Lawsuit(
+                    title=title,
+                    court=court,
+                    date=date,
+                    url=url
+                ))
 
-            inserted += 1
+                inserted += 1
 
-        db.commit()
+            except Exception as e:
+                print(f"INSERT ERROR {i}:", e)
+
+        if inserted > 0:
+            db.commit()
+        else:
+            db.rollback()
+
+        print("INSERTED TOTAL:", inserted)
 
         return inserted
 
     except Exception as e:
-        print("SCAN ERROR:", str(e))
+        db.rollback()
+        print("SCAN FAILED:", e)
         return 0
 
     finally:
