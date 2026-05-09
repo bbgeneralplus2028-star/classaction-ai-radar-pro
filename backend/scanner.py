@@ -7,19 +7,20 @@ def run_daily_scan():
     try:
         cases = fetch_latest_cases()
 
-        print("\n=== RAW INPUT ===")
-        print(f"Total fetched: {len(cases)}")
+        print("\n=== FETCHED CASES ===")
+        print("Count:", len(cases) if cases else 0)
 
         if not cases:
-            print("NO DATA FROM ANY SOURCE")
+            print("NO DATA RETURNED")
             return 0
 
         inserted = 0
         skipped = 0
 
-        for case in cases:
+        for i, case in enumerate(cases):
             try:
                 if not isinstance(case, dict):
+                    skipped += 1
                     continue
 
                 title = case.get("title") or "Unknown Case"
@@ -31,7 +32,7 @@ def run_daily_scan():
                     skipped += 1
                     continue
 
-                # prevent duplicates
+                # duplicate check
                 exists = db.query(Lawsuit).filter(Lawsuit.url == url).first()
                 if exists:
                     skipped += 1
@@ -47,14 +48,13 @@ def run_daily_scan():
                 inserted += 1
 
             except Exception as e:
-                print("ERROR:", e)
+                print(f"ERROR {i}:", e)
                 skipped += 1
 
         db.commit()
 
-        print("\n=== SCAN RESULT ===")
-        print("Inserted:", inserted)
-        print("Skipped:", skipped)
+        print("INSERTED:", inserted)
+        print("SKIPPED:", skipped)
 
         return inserted
 
