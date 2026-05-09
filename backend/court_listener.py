@@ -1,46 +1,38 @@
 import requests
 
 def fetch_latest_cases():
-
-    url = "https://www.courtlistener.com/api/rest/v3/dockets/"
-
-    params = {
-        "page_size": 20,
-        "ordering": "-date_created",
-        "search": "class action"
-    }
-
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
-
     try:
-        response = requests.get(
-            url,
-            params=params,
-            headers=headers,
-            timeout=30
-        )
+        url = "https://example.com/api/cases"  # replace with real source
+
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
 
         data = response.json()
 
-        results = data.get("results", [])
+        print("FETCH RAW RESPONSE:", data)
 
-        cases = []
+        # Normalize structure
+        if isinstance(data, dict):
+            data = data.get("results") or data.get("data") or []
 
-        for item in results:
+        if not isinstance(data, list):
+            return []
 
-            case_name = item.get("case_name") or item.get("caseName") or "Unknown Case"
+        cleaned = []
 
-            cases.append({
-                "title": case_name,
-                "court": str(item.get("court") or "Unknown Court"),
-                "date": item.get("date_filed") or "",
-                "url": item.get("absolute_url") or ""
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+
+            cleaned.append({
+                "title": item.get("title"),
+                "court": item.get("court"),
+                "date": item.get("date"),
+                "url": item.get("url")
             })
 
-        return cases
+        return cleaned
 
     except Exception as e:
-        print("COURTLISTENER ERROR:", str(e))
+        print("FETCH ERROR:", e)
         return []
