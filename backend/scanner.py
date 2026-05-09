@@ -1,40 +1,28 @@
-import requests
-from ai_summary import summarize_lawsuit
-from database import SessionLocal, Lawsuit
-from notification_engine import create_notification
-
-create_notification(
-    title="New Class Action Detected",
-    message=summary,
-    lawsuit_id=lawsuit.id
-)
-COURTLISTENER_URL = "https://www.courtlistener.com/api/rest/v3/dockets/"
+from backend.court_listener import fetch_latest_cases
+from backend.database import SessionLocal, Lawsuit
 
 def run_daily_scan():
     db = SessionLocal()
-    data = requests.get(COURTLISTENER_URL).json()
 
-    for item in data.get("results", [])[:15]:
+    cases = fetch_latest_cases(limit=25)
 
-        title = item.get("case_name", "Unknown Case")
-        court = item.get("court", "")
-        date = item.get("date_filed", "")
-        url = item.get("absolute_url", "")
-
-        summary = summarize_lawsuit(title)
-
-        exists = db.query(Lawsuit).filter(Lawsuit.title == title).first()
-        if exists:
+    for case in cases:
+        if "error" in case:
             continue
 
-        lawsuit = Lawsuit(
-            title=title,
-            court=court,
-            filed_date=date,
-            summary=summary,
-            url=f"https://courtlistener.com{url}"
-        )
+        exists = db.query(Lawsuit).filter(Lawsuit.title == case["title"]).first()
 
-        db.add(lawsuit)
+        if not exists:
+            new_case = Lawsuit(
+                title=case["title"],
+                court=case["court"],
+                filed_date=case["filed_date"],
+                summary=case["summary"],
+                url=case["url"]
+            )
+            db.add(new_case)
 
     db.commit()
+    db.close()
+
+    return {"status": "scan complete", "count": len(cases)}
