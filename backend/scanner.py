@@ -7,16 +7,17 @@ def run_daily_scan():
     try:
         cases = fetch_latest_cases()
 
-        print("\n=== RAW CASES RECEIVED ===")
-        print(cases)
+        print("\n=== RAW INPUT ===")
+        print(f"Total fetched: {len(cases)}")
 
         if not cases:
-            print("NO CASES RETURNED FROM SOURCE")
+            print("NO DATA FROM ANY SOURCE")
             return 0
 
         inserted = 0
+        skipped = 0
 
-        for i, case in enumerate(cases):
+        for case in cases:
             try:
                 if not isinstance(case, dict):
                     continue
@@ -26,15 +27,14 @@ def run_daily_scan():
                 date = case.get("date") or ""
                 url = case.get("url") or ""
 
-                # Skip invalid entries
                 if not url:
-                    print(f"[SKIP {i}] NO URL")
+                    skipped += 1
                     continue
 
-                # Prevent duplicates
+                # prevent duplicates
                 exists = db.query(Lawsuit).filter(Lawsuit.url == url).first()
                 if exists:
-                    print(f"[SKIP {i}] DUPLICATE")
+                    skipped += 1
                     continue
 
                 db.add(Lawsuit(
@@ -47,12 +47,14 @@ def run_daily_scan():
                 inserted += 1
 
             except Exception as e:
-                print(f"[ERROR {i}]", e)
+                print("ERROR:", e)
+                skipped += 1
 
         db.commit()
 
-        print("\n=== SCAN COMPLETE ===")
-        print("INSERTED:", inserted)
+        print("\n=== SCAN RESULT ===")
+        print("Inserted:", inserted)
+        print("Skipped:", skipped)
 
         return inserted
 
