@@ -7,11 +7,9 @@ router = APIRouter()
 def scan():
     try:
         count = run_daily_scan()
-        return {
-            "message": "scan complete",
-            "inserted": count
-        }
+        return {"message": "scan complete", "inserted": count}
     except Exception as e:
         return {
-            "error": str(e)
+            "error": str(e),
+            "type": type(e).__name__
         }
