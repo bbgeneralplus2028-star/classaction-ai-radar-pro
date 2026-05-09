@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 
 function App() {
   const [lawsuits, setLawsuits] = useState([]);
-
+showPopup(
+  "New Lawsuit Alert",
+  lawsuit.title
+)
   useEffect(() => {
     fetch("http://localhost:8000/lawsuits")
       .then(res => res.json())
