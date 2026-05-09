@@ -3,20 +3,30 @@ from backend.court_listener import fetch_latest_cases
 
 def run_daily_scan():
     db = SessionLocal()
-    cases = fetch_latest_cases()
 
-    inserted = 0
+    try:
+        cases = fetch_latest_cases()
 
-    for case in cases:
-        db.add(Lawsuit(
-            title=case.get("title"),
-            court=case.get("court"),
-            date=case.get("date"),
-            url=case.get("url")
-        ))
-        inserted += 1
+        inserted = 0
 
-    db.commit()
-    db.close()
+        for case in cases:
+            lawsuit = Lawsuit(
+                title=case.get("title"),
+                court=case.get("court"),
+                date=case.get("date"),
+                url=case.get("url")
+            )
 
-    return inserted
+            db.add(lawsuit)
+            inserted += 1
+
+        db.commit()
+
+        return inserted
+
+    except Exception as e:
+        print("SCAN ERROR:", str(e))
+        return 0
+
+    finally:
+        db.close()
