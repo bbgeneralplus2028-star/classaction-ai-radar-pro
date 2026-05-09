@@ -13,24 +13,23 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
 # =========================================
-# LAWSUIT MODEL (AI RADAR V2)
+# LAWSUIT MODEL (FINAL V2)
 # =========================================
 class Lawsuit(Base):
     __tablename__ = "lawsuits"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # Core fields
     title = Column(String, index=True)
     court = Column(String, index=True)
 
-    # FIXED FIELD (consistent naming across system)
+    # unified field name used everywhere
     filed_date = Column(String, index=True)
 
-    # AI-ready expansion fields
     summary = Column(Text, nullable=True)
+
     url = Column(String, unique=True, index=True)
 
-    # Optional future AI classification fields
-    category = Column(String, nullable=True)   # credit, banking, debt, etc.
-    source = Column(String, nullable=True)     # courtlistener, cfpb, news
+    # future AI expansion fields
+    category = Column(String, nullable=True)
+    source = Column(String, nullable=True)
